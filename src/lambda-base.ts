@@ -16,9 +16,11 @@ export class LambdaBase extends GoFunction {
 			architecture: Architecture.ARM_64,
 			timeout: Duration.minutes(2),
 			logRetention: RetentionDays.ONE_WEEK,
-			role: new LambdaRole(scope, `${id}LambdaRole`),
+			role: new LambdaRole(scope, `${id}Role`),
 			bundling: {
-				forcedDockerBundling: true,
+				environment: {
+					GOWORK: "off",
+				},
 			},
 			...props,
 		});

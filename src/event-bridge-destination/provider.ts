@@ -16,7 +16,7 @@ export class Provider extends AwsProvider {
 	}
 	static getOrCreate(scope: Construct, apiSecret: ISecret) {
 		const stack = Stack.of(scope);
-		const id = "_StripeFeatureProvider";
+		const id = "_StripeEventBridgeDestinationProvider";
 		const provider =
 			(stack.node.tryFindChild(id) as Provider) || new Provider(stack, id);
 

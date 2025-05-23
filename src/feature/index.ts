@@ -7,12 +7,12 @@ import { Provider } from "./provider";
 export interface FeatureProps extends StripeProps {
 	/**
 	 * The feature’s name, for your own purpose, not meant to be displayable to the customer.
-	 * @defaultValue generated
+	 * @default generated name
 	 */
 	readonly name?: string;
 	/**
 	 * A unique key you provide as your own system identifier. This may be up to 80 characters.
-	 * @defaultValue generated
+	 * @default generated lookup key
 	 */
 	readonly lookupKey?: string;
 }
