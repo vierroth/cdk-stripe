@@ -1,9 +1,9 @@
 import { Construct } from "constructs";
-import { CustomResource, Names } from "aws-cdk-lib";
+import { CustomResource, Names, Stack } from "aws-cdk-lib";
+import { EventBus } from "aws-cdk-lib/aws-events";
 
 import { StripeProps } from "../stripe-props";
 import { Provider } from "./provider";
-import { IEventBus } from "aws-cdk-lib/aws-events";
 
 export interface EventBridgeDestinationProps extends StripeProps {
 	/**
@@ -11,6 +11,14 @@ export interface EventBridgeDestinationProps extends StripeProps {
 	 * @default generated name
 	 */
 	readonly name?: string;
+	/**
+	 * An optional description of what the event destination is used for.
+	 * @default no description
+	 */
+	readonly description?: string;
+	/**
+	 * The list of events to enable for this endpoint.
+	 */
 	readonly enabledEvents: (
 		| "account.application.authorized"
 		| "account.application.deauthorized"
@@ -233,13 +241,13 @@ export interface EventBridgeDestinationProps extends StripeProps {
 		| "transfer.updated"
 		| "data.object is a transfer"
 	)[];
-	readonly eventBus: IEventBus;
 }
 
 /**
  * @category Constructs
  */
 export class EventBridgeDestination extends CustomResource {
+	public readonly eventBus;
 	public readonly eventBridgeDestinationName = this.getAttString(
 		"eventBridgeDestinationName",
 	);
@@ -261,10 +269,15 @@ export class EventBridgeDestination extends CustomResource {
 			properties: {
 				secretName: props.apiSecret.secretName,
 				name: props.name || generatedName,
+				description: props.description || "",
 				enabledEvents: props.enabledEvents,
-				accountId: props.eventBus.stack.account,
-				region: props.eventBus.stack.region,
+				accountId: Stack.of(scope).account,
+				region: Stack.of(scope).region,
 			},
+		});
+
+		this.eventBus = new EventBus(this, "EventBus", {
+			eventSourceName: this.getAttString("eventSourceArn"),
 		});
 	}
 }

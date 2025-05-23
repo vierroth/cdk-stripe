@@ -21,14 +21,27 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 
 	Stripe := stripe.NewClient(*secretNameValue.SecretString)
 
+	enabledEvents := make([]*string, len(event.ResourceProperties["enabledEvents"].([]string)))
+	for i, event := range event.ResourceProperties["enabledEvents"].([]string) {
+		enabledEvents[i] = &event
+	}
+
 	switch event.RequestType {
 	case cfn.RequestCreate:
-		feature, err := Stripe.V1EntitlementsFeatures.Create(ctx, &stripe.EntitlementsFeatureCreateParams{
-			Name:      stripe.String(event.ResourceProperties["name"].(string)),
-			LookupKey: stripe.String(event.ResourceProperties["lookupKey"].(string)),
+		destination, err := Stripe.V2CoreEventDestinations.Create(ctx, &stripe.V2CoreEventDestinationCreateParams{
+			Type:         stripe.String("amazon_eventbridge"),
+			EventPayload: stripe.String("snapshot"),
+
+			Name:          stripe.String(event.ResourceProperties["name"].(string)),
+			Description:   stripe.String(event.ResourceProperties["description"].(string)),
+			EnabledEvents: enabledEvents,
+			AmazonEventbridge: &stripe.V2CoreEventDestinationCreateAmazonEventbridgeParams{
+				AwsAccountID: stripe.String(event.ResourceProperties["accountId"].(string)),
+				AwsRegion:    stripe.String(event.ResourceProperties["region"].(string)),
+			},
 		})
 		if err != nil {
-			Logger.Error("Error creating feature", slog.Any("error", err))
+			Logger.Error("Error creating event destination", slog.Any("error", err))
 			return cfn.Response{}, err
 		}
 
@@ -37,23 +50,27 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 			StackID:            event.StackID,
 			RequestID:          event.RequestID,
 			LogicalResourceID:  event.LogicalResourceID,
-			PhysicalResourceID: feature.ID,
+			PhysicalResourceID: destination.ID,
 			Data: map[string]any{
-				"featureName": feature.Name,
+				"eventBridgeDestinationName": destination.Name,
+				"eventSourceArn":             destination.AmazonEventbridge.AwsEventSourceArn,
 			},
 		}, nil
 
 	case cfn.RequestUpdate:
-		if event.ResourceProperties["lookupKey"].(string) != event.OldResourceProperties["lookupKey"].(string) {
-			Logger.Error("Lookup keys can`t be updated after feture creation", slog.Any("error", err))
-			return cfn.Response{}, errors.New("Lookup keys can`t be updated after feture creation")
+		if event.ResourceProperties["accountId"].(string) != event.OldResourceProperties["accountId"].(string) ||
+			event.ResourceProperties["region"].(string) != event.OldResourceProperties["region"].(string) {
+			Logger.Error("Event bus cant be changed after destination creation", slog.Any("error", err))
+			return cfn.Response{}, errors.New("Event bus cant be changed after destination creation")
 		}
 
-		feature, err := Stripe.V1EntitlementsFeatures.Update(ctx, event.PhysicalResourceID, &stripe.EntitlementsFeatureUpdateParams{
-			Name: stripe.String(event.ResourceProperties["name"].(string)),
+		destination, err := Stripe.V2CoreEventDestinations.Update(ctx, event.PhysicalResourceID, &stripe.V2CoreEventDestinationUpdateParams{
+			Name:          stripe.String(event.ResourceProperties["name"].(string)),
+			Description:   stripe.String(event.ResourceProperties["description"].(string)),
+			EnabledEvents: enabledEvents,
 		})
 		if err != nil {
-			Logger.Error("Error updating feature", slog.Any("error", err))
+			Logger.Error("Error updating event destination", slog.Any("error", err))
 			return cfn.Response{}, err
 		}
 
@@ -64,16 +81,14 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 			LogicalResourceID:  event.LogicalResourceID,
 			PhysicalResourceID: event.PhysicalResourceID,
 			Data: map[string]any{
-				"featureName": feature.Name,
+				"eventBridgeDestinationName": destination.Name,
 			},
 		}, nil
 
 	case cfn.RequestDelete:
-		_, err := Stripe.V1EntitlementsFeatures.Update(ctx, event.PhysicalResourceID, &stripe.EntitlementsFeatureUpdateParams{
-			Active: stripe.Bool(false),
-		})
+		_, err := Stripe.V2CoreEventDestinations.Delete(ctx, event.PhysicalResourceID, &stripe.V2CoreEventDestinationDeleteParams{})
 		if err != nil {
-			Logger.Error("Error deleting feature", slog.Any("error", err))
+			Logger.Error("Error deleting event destination", slog.Any("error", err))
 			return cfn.Response{}, err
 		}
 
