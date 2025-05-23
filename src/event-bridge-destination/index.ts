@@ -251,6 +251,7 @@ export class EventBridgeDestination extends CustomResource {
 	public readonly eventBridgeDestinationName = this.getAttString(
 		"eventBridgeDestinationName",
 	);
+	public readonly eventSourceName = this.getAttString("eventSourceName");
 
 	constructor(
 		scope: Construct,
@@ -277,7 +278,7 @@ export class EventBridgeDestination extends CustomResource {
 		});
 
 		this.eventBus = new EventBus(this, "EventBus", {
-			eventSourceName: this.getAttString("eventSourceArn"),
+			eventSourceName: this.getAttString("eventSourceName"),
 		});
 	}
 }

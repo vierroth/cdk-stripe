@@ -1,6 +1,6 @@
 {
 	"name": "@flit/cdk-stripe",
-	"version": "0.0.11",
+	"version": "0.0.14",
 	"description": "A collection of AWS CDK constructs to manager your Stripe resources programmatically",
 	"keywords": [
 		"aws",

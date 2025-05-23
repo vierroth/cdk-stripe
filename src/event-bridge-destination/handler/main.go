@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -21,9 +22,9 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 
 	Stripe := stripe.NewClient(*secretNameValue.SecretString)
 
-	enabledEvents := make([]*string, len(event.ResourceProperties["enabledEvents"].([]string)))
-	for i, event := range event.ResourceProperties["enabledEvents"].([]string) {
-		enabledEvents[i] = &event
+	enabledEvents := make([]*string, len(event.ResourceProperties["enabledEvents"].([]any)))
+	for i, event := range event.ResourceProperties["enabledEvents"].([]any) {
+		enabledEvents[i] = stripe.String(event.(string))
 	}
 
 	switch event.RequestType {
@@ -45,6 +46,8 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 			return cfn.Response{}, err
 		}
 
+		_, eventSourceName, _ := strings.Cut(destination.AmazonEventbridge.AwsEventSourceArn, "/")
+
 		return cfn.Response{
 			Status:             "SUCCESS",
 			StackID:            event.StackID,
@@ -53,7 +56,7 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 			PhysicalResourceID: destination.ID,
 			Data: map[string]any{
 				"eventBridgeDestinationName": destination.Name,
-				"eventSourceArn":             destination.AmazonEventbridge.AwsEventSourceArn,
+				"eventSourceName":            eventSourceName,
 			},
 		}, nil
 
