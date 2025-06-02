@@ -25,7 +25,7 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 	case cfn.RequestCreate:
 		product, err := Stripe.V1Products.Create(ctx, &stripe.ProductCreateParams{
 			Name:   stripe.String(event.ResourceProperties["name"].(string)),
-			Active: stripe.Bool(event.ResourceProperties["active"].(bool)),
+			Active: stripe.Bool(event.ResourceProperties["active"].(string) == "true"),
 		})
 		if err != nil {
 			Logger.Error("Error creating product", slog.Any("error", err))
@@ -47,7 +47,7 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 	case cfn.RequestUpdate:
 		product, err := Stripe.V1Products.Update(ctx, event.PhysicalResourceID, &stripe.ProductUpdateParams{
 			Name:   stripe.String(event.ResourceProperties["name"].(string)),
-			Active: stripe.Bool(event.ResourceProperties["active"].(bool)),
+			Active: stripe.Bool(event.ResourceProperties["active"].(string) == "true"),
 		})
 		if err != nil {
 			Logger.Error("Error updating product", slog.Any("error", err))
