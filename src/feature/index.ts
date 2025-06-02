@@ -21,7 +21,7 @@ export interface FeatureProps extends StripeProps {
  * @category Constructs
  */
 export class Feature extends CustomResource {
-	public readonly featureName = this.getAttString("featureName");
+	public readonly featureName;
 	public readonly featureLookupKey;
 
 	constructor(scope: Construct, id: string, props: FeatureProps) {
@@ -41,6 +41,7 @@ export class Feature extends CustomResource {
 			},
 		});
 
-		this.featureLookupKey = props.lookupKey;
+		this.featureName = props.name || generatedLookupKey;
+		this.featureLookupKey = props.lookupKey || generatedLookupKey;
 	}
 }

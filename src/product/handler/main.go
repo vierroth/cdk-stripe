@@ -23,12 +23,12 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 
 	switch event.RequestType {
 	case cfn.RequestCreate:
-		feature, err := Stripe.V1EntitlementsFeatures.Create(ctx, &stripe.EntitlementsFeatureCreateParams{
-			Name:      stripe.String(event.ResourceProperties["name"].(string)),
-			LookupKey: stripe.String(event.ResourceProperties["lookupKey"].(string)),
+		product, err := Stripe.V1Products.Create(ctx, &stripe.ProductCreateParams{
+			Name:   stripe.String(event.ResourceProperties["name"].(string)),
+			Active: stripe.Bool(event.ResourceProperties["active"].(bool)),
 		})
 		if err != nil {
-			Logger.Error("Error creating feature", slog.Any("error", err))
+			Logger.Error("Error creating product", slog.Any("error", err))
 			return cfn.Response{}, err
 		}
 
@@ -37,25 +37,20 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 			StackID:            event.StackID,
 			RequestID:          event.RequestID,
 			LogicalResourceID:  event.LogicalResourceID,
-			PhysicalResourceID: feature.ID,
+			PhysicalResourceID: product.ID,
 			Data: map[string]any{
-				"featureId":   feature.ID,
-				"featureName": feature.Name,
-				"lookupKey":   feature.LookupKey,
+				"featureId":   product.ID,
+				"featureName": product.Name,
 			},
 		}, nil
 
 	case cfn.RequestUpdate:
-		if event.ResourceProperties["lookupKey"].(string) != event.OldResourceProperties["lookupKey"].(string) {
-			Logger.Error("Lookup keys can`t be updated after feture creation", slog.Any("error", err))
-			return cfn.Response{}, errors.New("Lookup keys can`t be updated after feture creation")
-		}
-
-		feature, err := Stripe.V1EntitlementsFeatures.Update(ctx, event.PhysicalResourceID, &stripe.EntitlementsFeatureUpdateParams{
-			Name: stripe.String(event.ResourceProperties["name"].(string)),
+		product, err := Stripe.V1Products.Update(ctx, event.PhysicalResourceID, &stripe.ProductUpdateParams{
+			Name:   stripe.String(event.ResourceProperties["name"].(string)),
+			Active: stripe.Bool(event.ResourceProperties["active"].(bool)),
 		})
 		if err != nil {
-			Logger.Error("Error updating feature", slog.Any("error", err))
+			Logger.Error("Error updating product", slog.Any("error", err))
 			return cfn.Response{}, err
 		}
 
@@ -66,18 +61,15 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 			LogicalResourceID:  event.LogicalResourceID,
 			PhysicalResourceID: event.PhysicalResourceID,
 			Data: map[string]any{
-				"featureId":   feature.ID,
-				"featureName": feature.Name,
-				"lookupKey":   feature.LookupKey,
+				"featureId":   product.ID,
+				"featureName": product.Name,
 			},
 		}, nil
 
 	case cfn.RequestDelete:
-		_, err := Stripe.V1EntitlementsFeatures.Update(ctx, event.PhysicalResourceID, &stripe.EntitlementsFeatureUpdateParams{
-			Active: stripe.Bool(false),
-		})
+		_, err := Stripe.V1Products.Delete(ctx, event.PhysicalResourceID, &stripe.ProductDeleteParams{})
 		if err != nil {
-			Logger.Error("Error deleting feature", slog.Any("error", err))
+			Logger.Error("Error deleting product", slog.Any("error", err))
 			return cfn.Response{}, err
 		}
 
