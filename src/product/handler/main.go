@@ -39,8 +39,8 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 			LogicalResourceID:  event.LogicalResourceID,
 			PhysicalResourceID: product.ID,
 			Data: map[string]any{
-				"featureId":   product.ID,
-				"featureName": product.Name,
+				"productId":   product.ID,
+				"productName": product.Name,
 			},
 		}, nil
 
@@ -61,8 +61,8 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 			LogicalResourceID:  event.LogicalResourceID,
 			PhysicalResourceID: event.PhysicalResourceID,
 			Data: map[string]any{
-				"featureId":   product.ID,
-				"featureName": product.Name,
+				"productId":   product.ID,
+				"productName": product.Name,
 			},
 		}, nil
 

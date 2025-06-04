@@ -1,6 +1,6 @@
 {
 	"name": "@flit/cdk-stripe",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"description": "A collection of AWS CDK constructs to manager your Stripe resources programmatically",
 	"keywords": [
 		"aws",
@@ -13,7 +13,7 @@
 	"bugs": "https://github.com/vierroth/cdk-stripe/issues",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/vierroth/cdk-stripe"
+		"url": "https://github.com/vierroth/cdk-stripe.git"
 	},
 	"license": "Apache-2.0",
 	"author": {
