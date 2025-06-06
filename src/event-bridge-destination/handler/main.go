@@ -77,6 +77,8 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 			return cfn.Response{}, err
 		}
 
+		_, eventSourceName, _ := strings.Cut(destination.AmazonEventbridge.AwsEventSourceArn, "/")
+
 		return cfn.Response{
 			Status:             "SUCCESS",
 			StackID:            event.StackID,
@@ -85,6 +87,7 @@ func handleRequest(ctx context.Context, event cfn.Event) (cfn.Response, error) {
 			PhysicalResourceID: event.PhysicalResourceID,
 			Data: map[string]any{
 				"eventBridgeDestinationName": destination.Name,
+				"eventSourceName":            eventSourceName,
 			},
 		}, nil
 
